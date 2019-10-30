@@ -1,0 +1,366 @@
+/*****************
+This program reads in a .csv file and uses it for the following cases based on user selection of number choice:
+  1. Counts the .csv file's amount of records & amount of characters and displays it to the users
+  2. Displays the first 20 lines of the CSV file
+  3. Displays the mean from the YTDrate column of the CSV file
+  4. Recreates the CSV file, if already existing, program will inform user and ask if the user would like to overwrite the existing file
+  5. User exits program
+
+  NOTE: To use program, you must do 2 things:
+  1. Have Mental_Health_Readmission__Beginning_2014.csv in a place where you can locate file
+  2. Find and replace "c:\users\avila\desktop\Mental_Health_Readmission__Beginning_2014.csv" with the file location of the csv file
+
+  -Kevin Avila
+ *****************/
+using System;
+using static System.Console;
+using System.IO;
+
+class SimpleMenu
+{
+    static void Main(string[] args)
+    {
+        const char DELIM = ',';
+        string[] fields = { };
+        string rec;
+        const string READFILE = @"c:\users\avila\desktop\Mental_Health_Readmission__Beginning_2014.csv";
+        string FILENAME = null;
+        int selection;          //used to store and test user's menu selection
+        bool quitting = false;  // we're not quitting util user tells us to
+
+        if (args.Length < 1) { FILENAME = @"c:\users\avila\desktop\MH_Read.csv"; }
+        else { FILENAME = args[0]; }
+
+        string answer = "n";
+        if (File.Exists(FILENAME))
+        {
+            Write($"File {FILENAME} exists.\nDo you want to overwrite the file? (y/n)");
+            answer = ReadLine();
+            if (answer != "y" && answer != "Y")
+            {
+                WriteLine("Continuing program.");
+            }
+            else
+            {
+                // Input and output streams
+                FileStream inFile = new FileStream(READFILE, FileMode.Open, FileAccess.Read);
+                StreamReader reader = new StreamReader(inFile);
+
+                FileStream outFile = new FileStream(FILENAME, FileMode.Create, FileAccess.Write);
+                StreamWriter writer = new StreamWriter(outFile);
+
+                //Begin writing into text file
+                rec = reader.ReadLine();
+                while (rec != null)
+                {
+                    fields = rec.Split(DELIM);
+                    for (int i = 0; i < 14; ++i)
+                    {
+                        if (i <= 12)
+                        {
+                            writer.Write($"{fields[i]}, ");
+                        }
+                        else
+                        {
+                            writer.WriteLine(fields[i]);
+                        }
+                    }
+                    rec = reader.ReadLine();
+                }
+
+                WriteLine("File Created.");
+                ReadLine();
+                writer.Close();
+                outFile.Close();
+                reader.Close();
+                inFile.Close();
+            }
+        }
+
+        // main program loop
+        do
+        {
+            selection = getUserSelection(); // call func. and store selection  
+            switch (selection)
+            {
+                case 1: count(); break;
+                case 2: DisplayTwenty(); break;
+                case 3: YTDMean(); break;
+                case 4: FileCreate(); break;
+                case 5: quitting = true; WriteLine("Exiting program."); break;
+                default: WriteLine($"Invalid choice = {selection}"); break;
+            }
+            WriteLine("Press <enter> to continue.");
+            ReadLine(); // lets user see selection
+        } while (!quitting);
+    }
+
+
+    static int getUserSelection()
+    {
+        displayMenu();
+        int selection;
+        string s = ReadLine();  // get user input
+        while (!int.TryParse(s, out selection))
+        {
+            displayMenu();
+            s = ReadLine(); // get user input
+        }
+
+        return (selection);
+    }
+
+    static void displayMenu()
+    {
+        string[] menuChoices =
+        {
+            "\t1. Count and Display the number of records and number of characters in CSV Datafile",
+            "\t2. Display 20 Lines from CSV Datafile",
+            "\t3. Display the mean of the YTDRate in CSV Datafile",
+            "\t4. File Creation of CSV Datafile",
+            "\t5. Exit"
+        };      //don't forget semicolon
+
+        Clear();
+        WriteLine("\t\tMY MENU");
+
+        foreach (string str in menuChoices)
+        {
+            WriteLine(str);
+        }
+    }
+
+    static void count()
+    {
+        // Begin Opening File for reading
+        const string FILENAME = @"c:\users\avila\desktop\Mental_Health_Readmission__Beginning_2014.csv";
+
+        // Open file to allow access
+        FileStream inFile = new FileStream(FILENAME, FileMode.Open, FileAccess.Read);
+        StreamReader reader = new StreamReader(inFile);
+
+        //initializers
+        string recCount;
+        int countRecord = 0;
+        int countChar = 0;
+        char[] charArray = new char[] { };
+
+        //establish first read
+        recCount = reader.ReadLine();
+
+        //While loop to read through file
+        while (recCount != null)
+        {
+            countRecord++;
+            charArray = recCount.ToCharArray();
+
+            //Foreach loop that adds up number of characters
+            foreach (char ch in charArray)
+            {
+                countChar++;
+            }
+
+            recCount = reader.ReadLine();
+        }
+
+
+        // Display Records and Characters
+        WriteLine($"Number of Records: {countRecord}");
+        WriteLine($"Number of Characters: {countChar}");
+        WriteLine();
+
+        // Close file
+        reader.Close();
+        inFile.Close();
+    }
+
+    static void DisplayTwenty() // Writing CSV; Revise
+    {
+        Patient Display;
+        Display = new Patient();
+
+        // Begin Opening File for reading
+        const char DELIM = ',';
+        const string FILENAME = @"c:\users\avila\desktop\Mental_Health_Readmission__Beginning_2014.csv";
+
+        // Open file to allow access
+        FileStream inFile = new FileStream(FILENAME, FileMode.Open, FileAccess.Read);
+        StreamReader reader = new StreamReader(inFile);
+
+        string rec;
+        string[] fields;
+        int tempMetricID;
+        int tempGroupLvl;
+
+        // Begins reading file
+        rec = reader.ReadLine();
+
+        for (int i = 0; i < 21; i++)
+        {
+            fields = rec.Split(DELIM);
+
+            // For row containting headers
+            if (i == 0)
+            {
+                WriteLine("\n|     {0,-15}|        {1,-26}|     {2,-20}|            {3,-33}|  {4,-30}|", fields[0], fields[1], fields[2], fields[3], fields[4]);
+                Write("__________________________________________________________________________________________________________________________________________________________________");
+            }
+
+            // Record Rows
+            else
+            {
+                Int32.TryParse(fields[0], out tempMetricID);
+                Display.MetricID = tempMetricID;
+                Display.MetricDesc = fields[1];
+                Int32.TryParse(fields[2], out tempGroupLvl);
+                Display.GroupLvl = tempGroupLvl;
+                Display.GroupDesc = fields[3];
+                Display.Region = fields[4];
+                WriteLine("\n|        {0,-12}|       {1,-27}|           {2,-14}|     {3,-40}|     {4,-27}|", Display.MetricID, Display.MetricDesc,
+                            Display.GroupLvl, Display.GroupDesc, Display.Region);
+            }
+
+            rec = reader.ReadLine(); // Reads in next line
+        }
+
+        WriteLine();
+
+        //closes file used
+        reader.Close();
+        inFile.Close();
+    }
+
+    static void YTDMean() // Apply Patient class in this one for values
+    {
+        // Begin Opening File for reading
+        const char DELIM = ',';
+        const string FILENAME = @"c:\users\avila\desktop\Mental_Health_Readmission__Beginning_2014.csv";
+        Patient Numbers;
+        Numbers = new Patient();
+
+        // Open file to allow access
+        FileStream inFile = new FileStream(FILENAME, FileMode.Open, FileAccess.Read);
+        StreamReader reader = new StreamReader(inFile);
+
+        // initializers
+        string rec;
+        string[] fields;
+        double count = 0;
+        double rateTotal = 0;
+        double rateMean = 0;
+        double tempTotal = 0;
+        double tempDenom;
+        double tempNumer;
+
+        // Begin first read
+        rec = reader.ReadLine();
+
+        while (rec != null)
+        {
+            fields = rec.Split(DELIM); // seperates data by comma
+
+            // Skip header row
+            if (fields[13] == "YTD Rate")
+            {
+                rec = reader.ReadLine();
+                continue; //skips one iteration
+            }
+
+            // begin adding up rate total
+            Double.TryParse(fields[12], out tempDenom);
+            Double.TryParse(fields[11], out tempNumer);
+
+            Numbers.YTDDenom = tempDenom;
+            Numbers.YTDNumer = tempNumer;
+
+            tempTotal = Numbers.YTDNumer / Numbers.YTDDenom;
+
+            // WriteLine(tempTotal);
+            rateTotal += tempTotal;
+            count++;
+
+            rec = reader.ReadLine(); // read next line
+        }
+
+        // Calculation of YTDRate
+        // WriteLine(rateTotal);
+        rateMean = rateTotal / count;
+
+        WriteLine($"The mean of YTD Rate is {rateMean}");
+
+        //close file used
+        reader.Close();
+        inFile.Close();
+    }
+
+    static void FileCreate() //Writing a CSV File 
+    {
+        // initializing the CSV and Text files
+        const string NEWFILE = @"c:\users\avila\desktop\MH_Readmission.csv";
+        const string FILENAME = @"c:\users\avila\desktop\Mental_Health_Readmission__Beginning_2014.csv";
+
+        // initializers for reading and writing
+        const char DELIM = ',';
+        string[] fields = { };
+        string rec;
+
+        // Test for existing file
+        string answer = "n";
+        if (File.Exists(NEWFILE))
+        {
+            Write($"File { NEWFILE } exists.\nDo you want to overwite the file (y/n)? ");
+            answer = ReadLine();
+            if (answer != "y" && answer != "Y")
+            {
+                WriteLine("Exiting Program");
+                Environment.Exit(0);
+            }
+        }
+
+        // Input and output streams
+        FileStream inFile = new FileStream(FILENAME, FileMode.Open, FileAccess.Read);
+        StreamReader reader = new StreamReader(inFile);
+
+        FileStream outFile = new FileStream(NEWFILE, FileMode.Create, FileAccess.Write);
+        StreamWriter writer = new StreamWriter(outFile);
+
+        //Begin writing into text file 
+        rec = reader.ReadLine();
+        while (rec != null)
+        {
+            fields = rec.Split(DELIM);
+            for (int i = 0; i < 14; ++i)
+            {
+                if (i <= 12)
+                {
+                    writer.Write($"{fields[i]}, ");
+                }
+                else
+                {
+                    writer.WriteLine(fields[i]);
+                }
+            }
+            rec = reader.ReadLine();
+        }
+
+        WriteLine("File Created.");
+
+        writer.Close();
+        outFile.Close();
+        reader.Close();
+        inFile.Close();
+    }
+}
+
+class Patient
+{
+    public int MetricID { get; set; }
+    public string MetricDesc { get; set; }
+    public int GroupLvl { get; set; }
+    public string GroupDesc { get; set; }
+    public string Region { get; set; }
+    public string AgeInpatientType { get; set; }
+    public double YTDNumer { get; set; }
+    public double YTDDenom { get; set; }
+    public double YTDRate { get; set; }
+}
